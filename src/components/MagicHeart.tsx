@@ -264,30 +264,20 @@ function AnimatedText({
 }: {
   rotationRef: React.MutableRefObject<{ z: number; y: number }>;
 }) {
-  const textRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
+  const textRef1 = useRef<THREE.Mesh>(null);
+  const textRef2 = useRef<THREE.Mesh>(null);
   const progressRef = useRef(0);
   const startTimeRef = useRef<number | null>(null);
 
-  useFrame(() => {
+  const updateText = (
+    textRef: React.RefObject<THREE.Mesh | null>,
+    elapsed: number
+  ) => {
     if (textRef.current) {
-      if (startTimeRef.current === null) {
-        startTimeRef.current = performance.now();
-      }
-
-      const elapsed = (performance.now() - startTimeRef.current) / 1000;
-      const duration = 1.5; // 1.5 segundos para aparecer completamente
-
-      // Texto aparece imediatamente, sem delay
-      const animProgress = Math.min(elapsed / duration, 1);
-      progressRef.current = easeOutCubic(animProgress);
-
       // Animações de scale e opacidade
       const scale = lerp(0.5, 1, progressRef.current);
       textRef.current.scale.set(scale, scale, scale);
-
-      // Seguir a rotação do coração
-      textRef.current.rotation.z = rotationRef.current.z;
-      textRef.current.rotation.y = rotationRef.current.y;
 
       // Animar opacidade do material
       if (textRef.current.material) {
@@ -312,21 +302,58 @@ function AnimatedText({
         textRef.current.scale.set(pulse, pulse, pulse);
       }
     }
+  };
+
+  useFrame(() => {
+    if (startTimeRef.current === null) {
+      startTimeRef.current = performance.now();
+    }
+
+    const elapsed = (performance.now() - startTimeRef.current) / 1000;
+    const duration = 1.5; // 1.5 segundos para aparecer completamente
+
+    // Texto aparece imediatamente, sem delay
+    const animProgress = Math.min(elapsed / duration, 1);
+    progressRef.current = easeOutCubic(animProgress);
+
+    // Aplicar rotação do coração ao grupo
+    if (groupRef.current) {
+      groupRef.current.rotation.z = rotationRef.current.z;
+      groupRef.current.rotation.y = rotationRef.current.y;
+    }
+
+    // Atualizar ambos os textos
+    updateText(textRef1, elapsed);
+    updateText(textRef2, elapsed);
   });
 
   return (
-    <Text
-      ref={textRef}
-      position={[0, 0, 0]}
-      fontSize={0.5}
-      color="#ffd700"
-      anchorX="center"
-      anchorY="middle"
-      outlineWidth={0.02}
-      outlineColor="#ff6b00"
-    >
-      I Love You
-    </Text>
+    <group ref={groupRef}>
+      <Text
+        ref={textRef1}
+        position={[0, 0.3, 0]}
+        fontSize={0.5}
+        color="#ffd700"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.02}
+        outlineColor="#ff6b00"
+      >
+        I Love You
+      </Text>
+      <Text
+        ref={textRef2}
+        position={[0, -0.3, 0]}
+        fontSize={0.5}
+        color="#ffd700"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.02}
+        outlineColor="#ff6b00"
+      >
+        Anna
+      </Text>
+    </group>
   );
 }
 
